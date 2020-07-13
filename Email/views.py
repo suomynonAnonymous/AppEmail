@@ -41,9 +41,7 @@ class SearchView(View):
 
 
 def compose(request):
-    if request.method == 'POST' and request.FILES['files']:
-        # if request.method == 'POST':
-        # print(request.POST)
+    if request.method == 'POST' or request.FILES['files']:
         print(request.GET.get('draft', None))
         is_draft = request.GET.get('draft', None)
         to = request.POST['to']
@@ -66,12 +64,12 @@ def compose(request):
         for u in uor_list:
 
             data = Mail()
-            data.sender = request.user,
+            data.sender = request.user
             if len(uor_list):
-                data.receiver = u,
-            data.subject = subject,
+                data.receiver = u
+            data.subject = subject
             if request.FILES.get('files', None):
-                data.file_upload = file_upload_url,
+                data.file_upload = file_upload_url
 
             data.body = body
             data.save()
@@ -94,18 +92,6 @@ def compose(request):
         #     )
         #     data.save()
         return redirect('/inbox')
-
-    # return redirect('/inbox')
-    # if data.is_valid:
-    #     try:
-    #         data.save()
-    #         # messages.success(request, 'Email has been sent !')
-    #         print('Email has been send')
-    #         return redirect('/')
-    #     except:
-    #         pass
-    # else:
-    #     print("Email Cannot be Send")
 
 
 # def inbox_counter(user):

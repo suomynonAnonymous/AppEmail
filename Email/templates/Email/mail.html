@@ -1417,7 +1417,9 @@
                         {%else%}
                         {% for email in mail%}
                         <li class="list-group-item card_display_email"
-                            data-email_subject="{{ email.subject }}">
+                            data-email_subject="{{ email.subject }}"
+                            data-email_body="{{email.body}} "
+                             data-email_sender="{{email.sender}}"   data-email_label="{{email.label}}"   data-email_receiver="{{email.receiver}} {{email.receiver.email}}"                          >
                             <div>
                                 <div class="custom-control custom-checkbox mr-2">
                                     <input type="checkbox" class="custom-control-input" id="customCheck1">
@@ -1489,7 +1491,7 @@
                             <h5 class="mb-0" id="card_content_subject">
                                 Advertising Internet Online
 
-                                <span class="badge bg-success-bright text-success ml-1">Freelance</span>
+                                <span class="badge bg-success-bright text-success ml-1" id = "card_content_label">Freelance</span>
                             </h5>
                         </div>
                         <div class="app-detail-action-right">
@@ -1519,10 +1521,10 @@
                                     </figure>
                                     <div>
                                         <h6 class="m-b-0">
-                                            <span class="text-primary">Valentine Maton</span>
+                                            <span class="text-primary" id ="card_content_sender">Valentine Maton</span>
                                             <span class="d-sm-inline d-none text-muted"> &lt;elnora@gmail.com&gt;</span>
                                         </h6>
-                                        <span class="small text-muted">to Lois Jimenez</span>
+                                        <span class="small text-muted" id = "card_content_receiver">to Lois Jimenez</span>
                                     </div>
                                 </div>
                                 <div class="ml-auto">
@@ -1536,21 +1538,9 @@
                                     <span class="text-muted">4:14 AM</span>
                                 </div>
                             </div>
-                            <p>Greetings!</p>
-                            <p>It is a long established fact that a reader will be distracted by the readable
-                                content of
-                                a page when looking at its layout.The point of using Lorem Ipsum is that it has a
-                                more-or-less normal distribution of letters, as opposed to using 'Content here,
-                                content
-                                here',making it look like readable English.</p>
-                            <p>There are many variations of passages of Lorem Ipsum available, but the majority have
-                                suffered alteration in some form, by injected humour, or randomised words which
-                                don't
-                                look even slightly believable.</p>
-                            <p>Sincerely yours,</p>
-                            <p>
-                                <strong>Envato Design Team</strong>
-                            </p>
+
+                            <p id="card_content_body"></p>
+
                         </div>
                         <hr class="m-0">
                         <div class="card-body">
@@ -1719,6 +1709,26 @@
     $(".card_display_email").click(function(){
         $("#card_content_subject").html($(this).attr("data-email_subject"));
     });
+    $(".card_display_email").click(function(){
+        $("#card_content_label").html($(this).attr("data-email_label"));
+    });
+    $(".card_display_email").click(function(){
+        $("#card_content_body").html($(this).attr("data-email_body"));
+    });
+     $(".card_display_email").click(function(){
+        $("#card_content_sender").html($(this).attr("data-email_sender"));
+    });
+     $(".card_display_email").click(function(){
+        $("#card_content_receiver").html($(this).attr("data-email_receiver"));
+    });
+
+
+
+
+//data-email_body
+//data-email_sender
+
+    //card_content_label
     // $(".compose-quill-editor").find("p").html()
 </script>
 </html>
