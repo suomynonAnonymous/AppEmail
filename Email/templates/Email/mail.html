@@ -1219,11 +1219,11 @@
                 </div>
                 <div class="app-sidebar-menu">
                     <div class="list-group list-group-flush">
-                        <a href="{% url 'email_list' %}"
+                        <a href="{% url 'mail_list_class' %}?email_type=inbox"
 
                            class="list-group-item
 
-                           {% if 'inbox' in request.path %}
+                           {% if 'inbox' in request.get_full_path %}
                             active
                             {% endif %}
 
@@ -1233,26 +1233,47 @@
                             <span class="small ml-auto">{{ mail.count }}</span>
 
                         </a>
-                        <a href="{% url 'send_list' %}"
+                        <a href="{% url 'mail_list_class' %}?email_type=send"
 
                            class="list-group-item
-                            {% if 'send' in request.path %}
+                            {% if 'send' in request.get_full_path %}
                             active
                             {% endif %} ">
                             <i class="ti-check list-group-icon mr-2"></i>Send
-                            {{request.url}}
+
                         </a>
-                        <a href="" class="list-group-item">
+                        <a href="{% url 'mail_list_class' %}?email_type=draft"
+                           class="list-group-item
+                             {% if 'draft' in request.get_full_path %}
+                            active
+                            {% endif %} ">
+
                             <i class="ti-pencil-alt list-group-icon mr-2"></i>Draft
                         </a>
-                        <a href="" class="list-group-item d-flex align-items-center">
+
+                        <a href="{% url 'mail_list_class' %}?email_type=starred"
+                           class="list-group-item d-flex align-items-center
+                            {% if 'starred' in request.get_full_path%}
+                            active
+                            {% endif %} ">
+
                             <i class="ti-star list-group-icon mr-2"></i>Starred
                             <span class="small ml-auto">10</span>
                         </a>
-                        <a href="" class="list-group-item">
+                        <a href="{% url 'mail_list_class' %}?email_type=spam"
+                           class="list-group-item
+                            {% if 'spam' in request.get_full_path %}
+                            active
+                            {% endif %} ">
+
                             <i class="ti-info-alt list-group-icon mr-2"></i>Spam
                         </a>
-                        <a href="" class="list-group-item d-flex align-items-center">
+
+                        <a href="{% url 'mail_list_class' %}?email_type=trash"
+                           class="list-group-item d-flex align-items-center
+                             {% if 'trash' in request.get_full_path %}
+                            active
+                            {% endif %} ">
                             <i class="ti-trash list-group-icon mr-2"></i>Trash
                             <span class="small ml-auto">2</span>
                         </a>
@@ -1322,12 +1343,14 @@
                     </ul>
                 </div>
                 <div class="action-right">
-                    <form class="d-flex mr-3" method="GET" action="{% url 'search' %}">
+                    <form class="d-flex mr-3" method="GET" action="{% url 'mail_list_class' %}">
                         <a href="#" class="app-sidebar-menu-button btn btn-outline-light">
                             <i data-feather="menu" class="width-15 height-15"></i>
                         </a>
                         <div class="input-group" >
-                            <input type="text" class="form-control" name = "query" placeholder="Email search"
+                            <input type="text" class="form-control" name = "search" placeholder="Email search"
+                                   aria-describedby="button-addon1">
+                            <input type="hidden" class="form-control" name = "email_type" value="{{email_type}}"
                                    aria-describedby="button-addon1">
                             <div class="input-group-append">
                                 <button class="btn" type="button" id="button-addon1">
@@ -1360,66 +1383,21 @@
 
                 <div class="app-lists">
                     <ul class="list-group list-group-flush">
-                        {%if search_query%}
-                        {% for search in search_query %}
-                        <li class="list-group-item">
-                            <div>
-                                <div class="custom-control custom-checkbox mr-2">
-                                    <input type="checkbox" class="custom-control-input" id="customCheck1">
-                                    <label class="custom-control-label" for="customCheck1"></label>
-                                </div>
-                            </div>
-                            <div>
-                                <a href="#" class="add-star mr-3" title="Add stars">
-                                    <i class="fa fa-star-o font-size-16"></i>
-                                </a>
-                            </div>
-                            <div>
-                                <figure class="avatar avatar-sm mr-3">
-                                    <img src="{%static "/admin/assets/media/image/user/man_avatar5.jpg"%}"
-                                         class="rounded-circle" alt="image">
-                                </figure>
-                            </div>
-                            <div class="flex-grow-1 min-width-0">
-                                <div class="mb-1 d-flex justify-content-between align-items-center">
-                                    <div class="text-truncate app-list-title">{{search.sender}}</div>
-                                    <div class="pl-3 d-flex">
-                                        <span class="text-nowrap text-muted">{{search.viewed_date|date:"D, M"}}</span>
-                                        <div class="dropdown ml-3">
-                                            <a href="#" class="btn btn-outline-light btn-floating btn-sm"
-                                               data-toggle="dropdown">
-                                                <i class="fa fa-ellipsis-h"></i>
-                                            </a>
-                                            <div class="dropdown-menu dropdown-menu-right">
-                                                <a class="dropdown-item" href="#">Reply</a>
-                                                <a class="dropdown-item" href="#">Add star</a>
-                                                <a class="dropdown-item" href="#">Add label</a>
-                                                <div class="dropdown-divider"></div>
-                                                <a class="dropdown-item text-danger" href="#">Delete</a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="text-muted d-flex justify-content-between">
-                                    <div class="text-truncate small">{{search.body}}
-                                    </div>
-                                    <div class="text-nowrap pl-3">
-                                        <ul class="list-inline">
-                                            <li class="list-inline-item mb-0">
-                                                <i class="fa fa-circle text-danger"></i>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                        {%endfor%}
-                        {%else%}
-                        {% for email in mail%}
+                       {% for email in object_list%}
                         <li class="list-group-item card_display_email"
                             data-email_subject="{{ email.subject }}"
                             data-email_body="{{email.body}} "
-                             data-email_sender="{{email.sender}}"   data-email_label="{{email.label}}"   data-email_receiver="{{email.receiver}} {{email.receiver.email}}"                          >
+                             data-email_sender="{{email.sender}} &lt{{email.sender.email}}&gt" data-email_label="{{email.label}}"
+                            data-email_receiver="{{email.receiver}} &lt{{email.receiver.email}}&gt"
+                            data-email_viewed_date ="{{email.viewed_date}}"
+                            data-email_attached_files ="
+                            {% if email.file_upload %}
+                                {{email.file_upload.url}}
+                            {% endif %}"
+                            data-email_file_name ="
+                            {% if email.file_upload %}
+                                {{email.file_upload.name}}
+                            {% endif %}">
                             <div>
                                 <div class="custom-control custom-checkbox mr-2">
                                     <input type="checkbox" class="custom-control-input" id="customCheck1">
@@ -1439,7 +1417,7 @@
                             </div>
                             <div class="flex-grow-1 min-width-0">
                                 <div class="mb-1 d-flex justify-content-between align-items-center">
-                                    <div class="text-truncate app-list-title">{{email.sender}}</div>
+                                    <div class="text-truncate app-list-title">{{email.sender}} &lt{{email.sender.email}}&gt</div>
                                     <div class="pl-3 d-flex">
                                         <span class="text-nowrap text-muted">{{email.viewed_date|date:"D, M"}}</span>
                                         <div class="dropdown ml-3">
@@ -1458,7 +1436,7 @@
                                     </div>
                                 </div>
                                 <div class="text-muted d-flex justify-content-between">
-                                    <div class="text-truncate small">{{email.body|safe}}
+                                    <div class="text-truncate small">{{email.subject}}
                                     </div>
                                     <div class="text-nowrap pl-3">
                                         <ul class="list-inline">
@@ -1471,7 +1449,7 @@
                             </div>
                         </li>
                         {%endfor%}
-                        {%endif%}
+
 
                     </ul>
                 </div>
@@ -1522,7 +1500,7 @@
                                     <div>
                                         <h6 class="m-b-0">
                                             <span class="text-primary" id ="card_content_sender">Valentine Maton</span>
-                                            <span class="d-sm-inline d-none text-muted"> &lt;elnora@gmail.com&gt;</span>
+<!--                                            <span class="d-sm-inline d-none text-muted"> &lt;elnora@gmail.com&gt;</span>-->
                                         </h6>
                                         <span class="small text-muted" id = "card_content_receiver">to Lois Jimenez</span>
                                     </div>
@@ -1535,7 +1513,7 @@
                                         <i class="fa fa-star font-size-16 text-warning"></i>
                                     </a>
 
-                                    <span class="text-muted">4:14 AM</span>
+                                    <span class="text-muted" id="card_content_viewed_date">4:14 AM</span>
                                 </div>
                             </div>
 
@@ -1543,23 +1521,19 @@
 
                         </div>
                         <hr class="m-0">
-                        <div class="card-body">
-                            <h6 class="mb-3 font-size-11 text-uppercase">Attached Files</h6>
+                        <div class="card-body" id="card_attach_div">
+                            <h6 class="mb-3 font-size-11 text-uppercase" >Attached Files</h6>
                             <ul class="list-unstyled mb-0">
                                 <li class="small">
-                                    <a href="#">
-                                        <i data-feather="paperclip" class="mr-1 width-15 height-15"></i>
+                                    <a href="" id ="card_content_attached_files">
+                                        <i data-feather="paperclip" class="mr-1 width-15 height-15" ></i>
                                         uikit-design.psd
                                     </a>
                                 </li>
-                                <li class="small">
-                                    <a href="#">
-                                        <i data-feather="paperclip" class="mr-1 width-15 height-15"></i>
-                                        uikit-design.sketch
-                                    </a>
-                                </li>
+
                             </ul>
                         </div>
+
                         <hr class="m-0">
                         <div class="card-body">
                             <h6 class="mb-3 font-size-11 text-uppercase">Reply</h6>
@@ -1608,21 +1582,39 @@
                             </a>
                         </div>
                     </div>
-                    <form method="POST" id="email_submit_form" action="compose" enctype="multipart/form-data">
+                    <form method="POST" id="email_submit_form"
+                          action="{% url 'mail_create_class' %}"
+                          enctype="multipart/form-data">
                         {% csrf_token %}
                         <div class="form-group">
-                            <input type="text" class="form-control tagsinput" name = "to" placeholder="To"
-                                   {% if object %}
-                                    value="{{ object.receiver.username }}"
-                                   {% endif %}
-                                   required>
+
+<!--                            <input type="text" class="form-control tagsinput" name = "to" placeholder="To"-->
+<!--                                   {% if object %}-->
+<!--                                    value="{{ object.receiver.username }}"-->
+<!--                                   {% endif %}-->
+<!--                                   required>-->
+
+                            <select name="receiver" class="form-control">
+                                {% for u in user_list %}
+                                <option value="{{ u.pk }}"
+                                        {% if object %}
+                                        {% if object.receiver.pk == u.pk %} selected {% endif %}
+                                        {% endif %}>{{ u.username }}
+                                </option>
+                                {% endfor %}
+
+                            </select>
+                            <input type="hidden" name="sender" value="{{ request.user.pk }}">
+
                         </div>
+
                         <div class="form-group">
                             <input type="text" class="form-control" name = "subject" placeholder="Subject" required>
                         </div>
+
                         <div class="form-group">
                             <div class="custom-file">
-                                <input type="file" class="custom-file-input" name = "files" multiple id="customFileLangHTML">
+                                <input type="file" class="custom-file-input" name = "file_upload" multiple id="customFileLangHTML">
                                 <label class="custom-file-label" for="customFileLangHTML" data-browse="Select files">Voeg
                                     je document toe</label>
                             </div>
@@ -1720,6 +1712,20 @@
     });
      $(".card_display_email").click(function(){
         $("#card_content_receiver").html($(this).attr("data-email_receiver"));
+    });
+    $(".card_display_email").click(function(){
+        $("#card_content_viewed_date").html($(this).attr("data-email_viewed_date"));
+    });
+    $(".card_display_email").click(function(){
+        $("#card_content_attached_files").attr("href", ($(this).attr("data-email_attached_files")));
+        $("#card_content_attached_files").html($(this).attr("data-email_file_name").replace("files/",""));
+        console.log($(this).attr("data-email_file_name"));
+        if ($(this).attr("data-email_file_name") === " ")
+        {
+            $("#card_attach_div").hide();
+        }
+
+
     });
 
 

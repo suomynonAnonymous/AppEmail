@@ -1,108 +1,79 @@
-from django.contrib import messages
 from django.contrib.auth.models import User
 from django.db.models import Q
-from django.shortcuts import render, redirect
-from django.views.generic import View, CreateView, UpdateView
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse_lazy
+from django.views.generic import CreateView, UpdateView, ListView
 
 from .forms import MailForm
 from .models import Mail
-from django.core.files.storage import FileSystemStorage
 
 
-class EmailListView(View):
-    view = {}
-
-    def get(self, request):
-        # self.view['mail'] = Mail.objects.all()
-        self.view['mail'] = Mail.objects.filter(receiver=self.request.user)
-        return render(self.request, 'Email/mail.html', self.view)
-
-
-class SendEmailListView(View):
-    view = {}
-
-    def get(self, request):
-        # self.view['mail'] = Mail.objects.all()
-        self.view['mail'] = Mail.objects.filter(sender=self.request.user)
-        return render(self.request, 'Email/mail.html', self.view)
-
-
-class SearchView(View):
-    view = {}
-
-    def get(self, request):
-        query = request.GET.get('query', None)
-        if not query:
-            return redirect('Email/mail.html')
-        self.view['mail'] = Mail.objects.filter(
-            receiver=self.request.user).filter(
-            Q(sender__username__icontains=query) | Q(body__icontains=query) | Q(subject__icontains=query))
-        return render(self.request, 'Email/mail.html', self.view)
-
-
-def compose(request):
-    if request.method == 'POST' or request.FILES['files']:
-        print(request.GET.get('draft', None))
-        is_draft = request.GET.get('draft', None)
-        to = request.POST['to']
-        user_list_r = to.split(',')
-        uor_list = []
-        for u in user_list_r:
-            if User.objects.filter(username__iexact=u).count() != 1:
-                continue
-            else:
-                uor_list.append(User.objects.get(username__iexact=u))
-        print("userlist", uor_list)
-        # uor_list = [User.objects.get(username=x) for x in user_list_r]
-        subject = request.POST.get('subject', "")
-        if request.FILES.get('files', None):
-            files = request.FILES['files']
-            fs = FileSystemStorage()
-            filename = fs.save(files.name, files)
-            file_upload_url = fs.url(filename)
-        body = request.POST.get('body', "")
-        for u in uor_list:
-
-            data = Mail()
-            data.sender = request.user
-            if len(uor_list):
-                data.receiver = u
-            data.subject = subject
-            if request.FILES.get('files', None):
-                data.file_upload = file_upload_url
-
-            data.body = body
-            data.save()
-
-        #     data = Mail.objects.create(
-        #         sender=request.user,
-        #         receiver=u,
-        #         subject=subject,
-        #         file_upload=file_upload_url,
-        #         body=body
-        #     )
-        #     data.save()
-        #     print("saved")
-        #
-        # if len(uor_list) == 0:
-        #     data = Mail.objects.create(
-        #         sender=request.user,
-        #         subject=subject,
-        #         body=body
-        #     )
-        #     data.save()
-        return redirect('/inbox')
-
-
-# def inbox_counter(user):
-#     return user.messages_set.filter(read=False).count()
-
-class DraftEmail(UpdateView):
+class MailListView(ListView):
     model = Mail
-    form_class = MailForm
     template_name = "Email/mail.html"
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        email_type = self.request.GET.get('email_type', "inbox")
+        if email_type == "inbox":
+            queryset = queryset.filter(receiver=self.request.user)
+        if email_type == "send":
+            queryset = queryset.filter(sender=self.request.user)
+        if email_type == "draft":
+            queryset = queryset.filter(sender=self.request.user)
+        if email_type == "starred":
+            queryset = queryset.filter(sender=self.request.user)
+        if email_type == "spam":
+            queryset = queryset.filter(sender=self.request.user)
+        if email_type == "trash":
+            queryset = queryset.filter(sender=self.request.user)
+        search = self.request.GET.get('search', "")
+        queryset = queryset.filter(
+            Q(sender__username__icontains=search) | Q(body__icontains=search) | Q(subject__icontains=search))
+        print(queryset)
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
-        context['mail'] = Mail.objects.filter(receiver=self.request.user)
+        context['user_list'] = User.objects.all()
+        context['email_type'] = self.request.GET.get('email_type', "inbox")
         return context
+
+
+class MailCreateView(CreateView):
+    model = Mail
+    form_class = MailForm
+    template_name = "Email/mail.html"
+    success_url = reverse_lazy("mail_list_class")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        return context
+
+    def form_invalid(self, form):
+        print('errors:', form.errors)
+        return super().form_invalid(form)
+
+    def form_valid(self, form):
+        email_type = self.request.GET.get("email_type", "inbox")
+        self.success_url += "?email_type=" + email_type
+        to_return = super().form_valid(form)
+        return to_return
+
+
+def mail_spam(request, pk):
+    mail = get_object_or_404(Mail, pk=pk)
+    mail.spam_mail()
+    return redirect('mail_list_class', pk=pk)
+
+
+def mail_starred(request, pk):
+    mail = get_object_or_404(Mail, pk=pk)
+    mail.star_mail()
+    return redirect('mail_list_class', pk=pk)
+
+
+def mail_deleted(request, pk):
+    mail = get_object_or_404(Mail, pk=pk)
+    mail.deleted_mail()
+    return redirect('mail_list_class', pk=pk)
