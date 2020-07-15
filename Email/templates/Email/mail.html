@@ -19,6 +19,9 @@
     <!-- Quill editor -->
     <link href="{%static "/admin/css/quill.snow.css"%}" rel="stylesheet" type="text/css">
 
+
+    <link href="{%static '/admin/css/vendor/select2/select2.css' %}" rel="stylesheet" type="text/css">
+
     <!-- Tagsinput -->
     <link rel="stylesheet" href="{%static "/admin/css/bootstrap-tagsinput.css"%}" type="text/css">
 
@@ -1257,9 +1260,12 @@
                             active
                             {% endif %} ">
 
-                            <i class="ti-star list-group-icon mr-2"></i>Starred
+                            <i class="ti-star list-group-icon mr-2
+                            {% if 'starred' in request.get_full_path%}
+                                                            text-warning {% endif %}   "></i>Starred
                             <span class="small ml-auto">10</span>
                         </a>
+
                         <a href="{% url 'mail_list_class' %}?email_type=spam"
                            class="list-group-item
                             {% if 'spam' in request.get_full_path %}
@@ -1321,11 +1327,15 @@
                                 With selected
                             </a>
                             <div class="dropdown-menu">
-                                <a class="dropdown-item" href="#">Mark as read</a>
-                                <a class="dropdown-item" href="#">Mark as unread</a>
-                                <a class="dropdown-item" href="#">Spam</a>
+                                <a class="dropdown-item email_status_select"
+                                   data-email_status="read" href="#">Mark as read</a>
+                                <a class="dropdown-item email_status_select"
+                                   data-email_status="unread" href="#">Mark as unread</a>
+                                <a class="dropdown-item email_status_select"
+                                   data-email_status="spam" href="#">Spam</a>
                                 <div class="dropdown-divider"></div>
-                                <a class="dropdown-item text-danger" href="#">Delete</a>
+                                <a class="dropdown-item text-danger email_status_select"
+                                   data-email_status="delete" href="#">Delete</a>
                             </div>
                         </li>
                         <li class="list-inline-item mb-0">
@@ -1333,7 +1343,12 @@
                                 Order by
                             </a>
                             <div class="dropdown-menu dropdown-menu-right">
-                                <a class="dropdown-item" href="#">Date</a>
+                                <form action="{% url 'mail_list_class' %}">
+                                    <input type="hidden" name="filter" value="date">
+                                    <input type="hidden" name="email_type" value="{{email_type}}">
+                                    <button class="dropdown-item" type="submit">Date</button>
+                                </form>
+<!--                                <a class="dropdown-item" href="{{request.get_full_path}}&filter=date">Date</a>-->
                                 <a class="dropdown-item" href="#">From</a>
                                 <a class="dropdown-item" href="#">Subject</a>
                                 <div class="dropdown-divider"></div>
@@ -1400,13 +1415,23 @@
                             {% endif %}">
                             <div>
                                 <div class="custom-control custom-checkbox mr-2">
-                                    <input type="checkbox" class="custom-control-input" id="customCheck1">
-                                    <label class="custom-control-label" for="customCheck1"></label>
+                                    <input type="checkbox" class="custom-control-input email_checkbox"
+                                           data-email_id="{{email.pk}}"
+                                           id="customCheck{{forloop.counter}}">
+                                    <label class="custom-control-label" for="customCheck{{forloop.counter}}"></label>
                                 </div>
                             </div>
                             <div>
-                                <a href="#" class="add-star mr-3" title="Add stars">
-                                    <i class="fa fa-star-o font-size-16"></i>
+                                <a href="{%url 'mail_starred' email.pk%}?email_type={{email_type}}"
+                                   class="add-star mr-3"
+
+                                   title="Add stars">
+                                    <i class="fa fa-star-o font-size-16
+                                    {%if email.mail_starred%}
+                                    text-warning
+                                    {%endif%}
+
+                                    "></i>
                                 </a>
                             </div>
                             <div>
@@ -1594,7 +1619,8 @@
 <!--                                   {% endif %}-->
 <!--                                   required>-->
 
-                            <select name="receiver" class="form-control">
+                            <select name="receiver_multiple" class="form-control select2-example"
+                                    id="receiver_multiple" multiple>
                                 {% for u in user_list %}
                                 <option value="{{ u.pk }}"
                                         {% if object %}
@@ -1604,6 +1630,7 @@
                                 {% endfor %}
 
                             </select>
+                            <input type="hidden" name="receiver_list" id="receiver_list" value="">
                             <input type="hidden" name="sender" value="{{ request.user.pk }}">
 
                         </div>
@@ -1678,6 +1705,8 @@
     <!-- quill -->
     <script src="{%static "/admin/vendors/quill/quill.js"%}"></script>
 
+    <script src="{%static '/admin/js/vendor/select2/select2.full.js' %}"></script>
+
     <!-- Mail example -->
     <script src="{%static "/admin/assets/js/examples/mail.js"%}"></script>
 
@@ -1686,10 +1715,17 @@
 <script src="{%static "/admin/assets/js/app.min.js"%}"></script>
 </body>
 <script>
+    $(".select2-example").select2({
+        placeholder: 'Select'
+    });
+
     $("#email_submit_form").submit(function(){
         $("#input_body").html($(".compose-quill-editor").find("p").html());
         console.log("hello");
         console.log($("#input_body").html());
+        let url_send = $("#email_submit_form").attr('action') + "?is_send=True";
+        $("#email_submit_form").attr('action',url_send);
+        $("#receiver_list").val($("#receiver_multiple").val());
     });
 
     $("#draft_email_create").click(function(){
@@ -1728,6 +1764,43 @@
 
     });
 
+    $(".email_status_select").click(function(){
+        // ////////// get status:
+        let status = $(this).attr("data-email_status");
+        console.log(status);
+        // ////////// for each selected email:
+        $(".email_checkbox:checked").each(function(){
+            // ////////// send request to change status
+            let email_id = $(this).attr('data-email_id');
+            console.log("eamil", email_id);
+
+            // ////// get url
+            let get_url = "";
+            if (status === "spam"){
+                get_url = "{% url 'mail_spam' pk=1234 %}".replace('1234', email_id);
+            }
+            if (status === "delete"){
+                get_url = "{% url 'mail_deleted' pk=1234 %}".replace('1234', email_id);
+            }
+
+            console.log(get_url);
+            // ////////// ajax post:
+            $.ajax({
+              url: get_url, // URL to your view that serves new info
+              type: 'GET', // GET or POST
+              //data: $(this).serialize(),
+              success: function (response) {
+                  location.reload();
+              },
+              error: function () {
+                  console.log('Error in posting form');
+              },
+              complete: function () {
+              }
+            });
+
+        });
+    });
 
 
 

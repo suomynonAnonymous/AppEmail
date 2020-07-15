@@ -1,7 +1,5 @@
 from django.contrib.auth.models import User
 from django.db import models
-from django.urls import reverse
-from django.utils import timezone
 
 LABEL_CHOICES = (('SP', 'Support'), ('AS', 'Assignment'), ('EX', 'Examination'),
                  ('PR', 'Practical'))
@@ -22,20 +20,30 @@ class Mail(models.Model):
     send_date = models.DateTimeField(auto_now=True)
     viewed_date = models.DateTimeField(auto_now=True)
     mail_send = models.BooleanField(default=False)
-    starred = models.BooleanField(default=False)
-    spam = models.BooleanField(default=False)
+    mail_starred = models.BooleanField(default=False)
+    mail_spam = models.BooleanField(default=False)
     mail_deleted = models.BooleanField(default=False)
+    mail_viewed = models.BooleanField(default=False)
+    mail_draft = models.BooleanField(default=False)
 
     def spam_mail(self):
-        self.spam = True
+        self.mail_spam = True
         self.save()
 
     def star_mail(self):
-        self.starred = True
+        self.mail_starred = True
         self.save()
 
     def deleted_mail(self):
         self.mail_deleted = True
+        self.save()
+
+    def send_mail(self):
+        self.mail_send = True
+        self.save()
+
+    def viewed_mail(self):
+        self.mail_viewed = True
         self.save()
 
     def __str__(self):

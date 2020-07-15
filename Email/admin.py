@@ -4,3 +4,4 @@ from .models import Mail
 
 admin.site.register(Mail)
 
+
