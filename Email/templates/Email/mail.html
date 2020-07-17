@@ -329,7 +329,7 @@
                                 <button class="btn">
                                     <i class="ti-search"></i>
                                 </button>
-                                <input type="text" class="form-control" placeholder="Search">
+                                <input type="text" class="form-control" placeholder="Search" >
                             </form>
                         </div>
                     </li>
@@ -1231,9 +1231,8 @@
                             {% endif %}
 
                            d-flex align-items-center">
-                            <i class="ti-email list-group-icon mr-2"></i>Inbox
-
-                            <span class="small ml-auto">{{ mail.count }}</span>
+                            <i class="ti-email list-group-icon mr-2 text-primary"></i>Inbox
+                            <span class="small ml-auto">{{ inbox_count }}</span>
 
                         </a>
                         <a href="{% url 'mail_list_class' %}?email_type=send"
@@ -1242,7 +1241,7 @@
                             {% if 'send' in request.get_full_path %}
                             active
                             {% endif %} ">
-                            <i class="ti-check list-group-icon mr-2"></i>Send
+                            <i class="ti-check list-group-icon mr-2 text-success" ></i>Send
 
                         </a>
                         <a href="{% url 'mail_list_class' %}?email_type=draft"
@@ -1251,7 +1250,7 @@
                             active
                             {% endif %} ">
 
-                            <i class="ti-pencil-alt list-group-icon mr-2"></i>Draft
+                            <i class="ti-pencil-alt list-group-icon mr-2 text-secondary"></i>Draft
                         </a>
 
                         <a href="{% url 'mail_list_class' %}?email_type=starred"
@@ -1260,10 +1259,8 @@
                             active
                             {% endif %} ">
 
-                            <i class="ti-star list-group-icon mr-2
-                            {% if 'starred' in request.get_full_path%}
-                                                            text-warning {% endif %}   "></i>Starred
-                            <span class="small ml-auto">10</span>
+                            <i class="ti-star list-group-icon mr-2 text-warning"></i>Starred
+                            <span class="small ml-auto">{{ starred_count }}</span>
                         </a>
 
                         <a href="{% url 'mail_list_class' %}?email_type=spam"
@@ -1272,7 +1269,7 @@
                             active
                             {% endif %} ">
 
-                            <i class="ti-info-alt list-group-icon mr-2"></i>Spam
+                            <i class="ti-info-alt list-group-icon mr-2 text-danger"></i>Spam
                         </a>
 
                         <a href="{% url 'mail_list_class' %}?email_type=trash"
@@ -1280,8 +1277,8 @@
                              {% if 'trash' in request.get_full_path %}
                             active
                             {% endif %} ">
-                            <i class="ti-trash list-group-icon mr-2"></i>Trash
-                            <span class="small ml-auto">2</span>
+                            <i class="ti-trash list-group-icon mr-2 text-danger"></i>Trash
+                            <span class="small ml-auto">{{ trash_count }}</span>
                         </a>
                     </div>
                     <div class="card-body">
@@ -1326,17 +1323,51 @@
                             <a href="#" class="btn btn-outline-light dropdown-toggle" data-toggle="dropdown">
                                 With selected
                             </a>
+
                             <div class="dropdown-menu">
-                                <a class="dropdown-item email_status_select"
+                                 {% if 'inbox' in request.get_full_path %}
+                                <a class="dropdown-item text-primary email_status_select"
                                    data-email_status="read" href="#">Mark as read</a>
-                                <a class="dropdown-item email_status_select"
+
+                                <a class="dropdown-item text-secondary email_status_select"
                                    data-email_status="unread" href="#">Mark as unread</a>
-                                <a class="dropdown-item email_status_select"
+
+
+                                <a class="dropdown-item text-warning email_status_select"
                                    data-email_status="spam" href="#">Spam</a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item text-danger email_status_select"
                                    data-email_status="delete" href="#">Delete</a>
+
+                                {% elif 'send' in request.get_full_path %}
+                                <a class="dropdown-item text-danger email_status_select"
+                                   data-email_status="delete" href="#">Delete</a>
+
+                                {% elif 'draft' in request.get_full_path %}
+                                <a class="dropdown-item text-success email_status_select"
+                                   data-email_status="send" href="#">Send Email</a>
+                                <a class="dropdown-item text-danger email_status_select"
+                                   data-email_status="delete" href="#">Delete</a>
+
+                                {% elif 'starred' in request.get_full_path %}
+                                <a class="dropdown-item text-light email_status_select"
+                                   data-email_status="unmark_star" href="#">UnMark as Star</a>
+                                {% elif 'spam' in request.get_full_path %}
+                                <a class="dropdown-item text-success email_status_select"
+                                   data-email_status="unmark_spam" href="#">UnMark as Spam</a>
+                                {% elif 'trash' in request.get_full_path %}
+                                <a class="dropdown-item text-success email_status_select"
+                                   data-email_status="recover" href="#">Recover Email</a>
+                                <a class="dropdown-item text-danger email_status_select"
+                                   data-email_status="remove" href="#">Empty Trash</a>
+
+
+                                {% endif %}
+
+
                             </div>
+
+
                         </li>
                         <li class="list-inline-item mb-0">
                             <a href="#" class="btn btn-outline-light dropdown-toggle" data-toggle="dropdown">
@@ -1349,8 +1380,18 @@
                                     <button class="dropdown-item" type="submit">Date</button>
                                 </form>
 <!--                                <a class="dropdown-item" href="{{request.get_full_path}}&filter=date">Date</a>-->
-                                <a class="dropdown-item" href="#">From</a>
-                                <a class="dropdown-item" href="#">Subject</a>
+                                <form action="{% url 'mail_list_class' %}">
+                                    <input type="hidden" name="filter" value="from">
+                                    <input type="hidden" name="email_type" value="{{email_type}}">
+                                    <button class="dropdown-item" type="submit">From</button>
+                                </form>
+<!--                                <a class="dropdown-item" href="#">From</a>-->
+                                <form action="{% url 'mail_list_class' %}">
+                                    <input type="hidden" name="filter" value="subject">
+                                    <input type="hidden" name="email_type" value="{{email_type}}">
+                                    <button class="dropdown-item" type="submit">Subject</button>
+                                </form>
+<!--                                <a class="dropdown-item" href="#">Subject</a>-->
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="#">Size</a>
                             </div>
@@ -1364,30 +1405,45 @@
                         </a>
                         <div class="input-group" >
                             <input type="text" class="form-control" name = "search" placeholder="Email search"
+                                   value="{{ search_q }}"
                                    aria-describedby="button-addon1">
                             <input type="hidden" class="form-control" name = "email_type" value="{{email_type}}"
                                    aria-describedby="button-addon1">
                             <div class="input-group-append">
-                                <button class="btn" type="button" id="button-addon1">
+                                <button class="btn" type="submit" id="button-addon1">
                                     <i class="ti-search"></i>
                                 </button>
                             </div>
                         </div>
                     </form>
                     <div class="app-pager d-flex align-items-center">
-                        <div class="mr-3">1-50 of 253</div>
+
+
+                        <div class="mr-3">{{ page_obj.number }} - {{page_obj.object_list|length}}  of {{ page_obj.paginator.num_pages }}</div>
+
                         <nav aria-label="Page navigation example">
                             <ul class="pagination">
-                                <li class="page-item">
-                                    <a class="page-link" href="#" aria-label="Previous">
-                                        <i class="ti-arrow-left"></i>
-                                    </a>
-                                </li>
-                                <li class="page-item">
-                                    <a class="page-link" href="#" aria-label="Next">
+
+                                    <li class="page-item">
+                                         {% if page_obj.has_previous %}
+                                        <a class="page-link"
+                                           href="{% url 'mail_list_class'%}?email_type={{email_type}}&page={{ page_obj.previous_page_number }}"
+                                           aria-label="Previous">
+                                            <i class="ti-arrow-left"></i>
+                                        </a>
+                                        {%endif%}
+                                    </li>
+
+                                   <li class="page-item">
+                                    {% if page_obj.has_next %}
+                                    <a class="page-link"
+                                       href="{% url 'mail_list_class'%}?email_type={{email_type}}&page={{ page_obj.next_page_number }}"
+                                       aria-label="Next">
                                         <i class="ti-arrow-right"></i>
                                     </a>
-                                </li>
+                                    {%endif%}
+                                   </li>
+
                             </ul>
                         </nav>
                     </div>
@@ -1399,10 +1455,20 @@
                 <div class="app-lists">
                     <ul class="list-group list-group-flush">
                        {% for email in object_list%}
-                        <li class="list-group-item card_display_email"
+                        <li class="list-group-item card_display_email
+                                {%if email.mail_viewed%}
+                                    text-light
+                                        {%else%}
+                                        bg-dark
+                                        {%endif%}"
+
+                            list_email_id="{{email.pk}}"
+
+
                             data-email_subject="{{ email.subject }}"
                             data-email_body="{{email.body}} "
-                             data-email_sender="{{email.sender}} &lt{{email.sender.email}}&gt" data-email_label="{{email.label}}"
+                             data-email_sender="{{email.sender}} &lt{{email.sender.email}}&gt"
+                            data-email_label="{{email.label}}"
                             data-email_receiver="{{email.receiver}} &lt{{email.receiver.email}}&gt"
                             data-email_viewed_date ="{{email.viewed_date}}"
                             data-email_attached_files ="
@@ -1426,9 +1492,12 @@
                                    class="add-star mr-3"
 
                                    title="Add stars">
-                                    <i class="fa fa-star-o font-size-16
+                                    <i class="fa font-size-16
                                     {%if email.mail_starred%}
-                                    text-warning
+                                        text-warning
+                                        fa-star
+                                    {% else %}
+                                        fa-star-o
                                     {%endif%}
 
                                     "></i>
@@ -1440,11 +1509,11 @@
                                          class="rounded-circle" alt="image">
                                 </figure>
                             </div>
-                            <div class="flex-grow-1 min-width-0">
+                            <div class="flex-grow-1 min-width-0   ">
                                 <div class="mb-1 d-flex justify-content-between align-items-center">
                                     <div class="text-truncate app-list-title">{{email.sender}} &lt{{email.sender.email}}&gt</div>
                                     <div class="pl-3 d-flex">
-                                        <span class="text-nowrap text-muted">{{email.viewed_date|date:"D, M"}}</span>
+                                        <span class="text-nowrap text-muted">{{email.viewed_date|date:"d F"}}</span>
                                         <div class="dropdown ml-3">
                                             <a href="#" class="btn btn-outline-light btn-floating btn-sm"
                                                data-toggle="dropdown">
@@ -1488,7 +1557,7 @@
                 <div class="card app-detail">
                     <div class="card-header">
                         <div class="app-detail-action-left align-items-center">
-                            <a class="app-detail-close-button btn btn-outline-light mr-3" href="#">
+                            <a class="app-detail-close-button btn btn-outline-light mr-3" href="">
                                 <i class="ti-arrow-left"></i>
                             </a>
                             <h5 class="mb-0" id="card_content_subject">
@@ -1535,7 +1604,7 @@
                                         <i class="fa fa-paperclip"></i>
                                     </a>
                                     <a href="#" class="mr-2">
-                                        <i class="fa fa-star font-size-16 text-warning"></i>
+                                        <i class=" fa fa-star font-size-16 text-warning "></i>
                                     </a>
 
                                     <span class="text-muted" id="card_content_viewed_date">4:14 AM</span>
@@ -1547,7 +1616,7 @@
                         </div>
                         <hr class="m-0">
                         <div class="card-body" id="card_attach_div">
-                            <h6 class="mb-3 font-size-11 text-uppercase" >Attached Files</h6>
+                            <reply_formh6 class="mb-3 font-size-11 text-uppercase" >Attached Files</reply_formh6>
                             <ul class="list-unstyled mb-0">
                                 <li class="small">
                                     <a href="" id ="card_content_attached_files">
@@ -1562,19 +1631,25 @@
                         <hr class="m-0">
                         <div class="card-body">
                             <h6 class="mb-3 font-size-11 text-uppercase">Reply</h6>
-                            <div class="reply-email-quill-editor mb-3"></div>
-                            <div class="d-flex justify-content-between">
-                                <div class="reply-email-quill-toolbar">
-                                        <span class="ql-formats mr-0">
-                                          <button class="ql-bold"></button>
-                                          <button class="ql-italic"></button>
-                                          <button class="ql-underline"></button>
-                                          <button class="ql-link"></button>
-                                          <button class="ql-image"></button>
-                                        </span>
+                            <form method="POST" action="" id="reply_form" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class="reply-email-quill-editor mb-3"></div>
+                                <div class="d-flex justify-content-between">
+                                    <div class="reply-email-quill-toolbar">
+                                            <span class="ql-formats mr-0">
+                                              <button class="ql-bold"></button>
+                                              <button class="ql-italic"></button>
+                                              <button class="ql-underline"></button>
+                                              <button class="ql-link"></button>
+                                              <button class="ql-image"></button>
+                                            </span>
+                                    </div>
+
+                                        <input type="hidden" name="body" id="reply_body">
+                                        <button type="submit" class="btn btn-primary">Send</button>
+
                                 </div>
-                                <button class="btn btn-primary">Send</button>
-                            </div>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -1715,6 +1790,11 @@
 <script src="{%static "/admin/assets/js/app.min.js"%}"></script>
 </body>
 <script>
+    $( document ).ready(function() {
+        $("#customCheckAll").prop('checked',false);
+        $(".email_checkbox").prop('checked',false);
+    });
+
     $(".select2-example").select2({
         placeholder: 'Select'
     });
@@ -1728,31 +1808,31 @@
         $("#receiver_list").val($("#receiver_multiple").val());
     });
 
+    // ///reply:
+    $("#reply_form").submit(function(e){
+        // e.preventDefault()
+        $("#reply_body").val($(".reply-email-quill-editor").find("p").html());
+        console.log("hello");
+        console.log($("#reply_body").val());
+
+        $("#email_submit_form").attr('action',url_send);
+        $("#receiver_list").val($("#receiver_multiple").val());
+    });
+
     $("#draft_email_create").click(function(){
         let url_send = $("#email_submit_form").attr('action') + "?draft=True";
         $("#email_submit_form").attr('action',url_send);
         $("#email_submit_form").submit();
     });
 
+    // Email Detailed View
     $(".card_display_email").click(function(){
         $("#card_content_subject").html($(this).attr("data-email_subject"));
-    });
-    $(".card_display_email").click(function(){
         $("#card_content_label").html($(this).attr("data-email_label"));
-    });
-    $(".card_display_email").click(function(){
         $("#card_content_body").html($(this).attr("data-email_body"));
-    });
-     $(".card_display_email").click(function(){
         $("#card_content_sender").html($(this).attr("data-email_sender"));
-    });
-     $(".card_display_email").click(function(){
         $("#card_content_receiver").html($(this).attr("data-email_receiver"));
-    });
-    $(".card_display_email").click(function(){
         $("#card_content_viewed_date").html($(this).attr("data-email_viewed_date"));
-    });
-    $(".card_display_email").click(function(){
         $("#card_content_attached_files").attr("href", ($(this).attr("data-email_attached_files")));
         $("#card_content_attached_files").html($(this).attr("data-email_file_name").replace("files/",""));
         console.log($(this).attr("data-email_file_name"));
@@ -1761,26 +1841,69 @@
             $("#card_attach_div").hide();
         }
 
+       // let url_reply = "{% url 'reply_create' pk=12345 %}?email_type={{ email_type }}".replace("12345", $(this).attr('list_email_id'));
+       // $("#reply_form").attr('action', url_reply);
+     //   console.log($("#reply_form"));
+     //   console.log(url_send);
+    });
+
+    // Mark As Viewed On Click Email
+    $(".card_display_email").click(function(){
+        let get_url = "";
+        let email_id = $(this).attr('list_email_id');
+        let this_el = $(this);
+        //console.log(email_id)
+        get_url = "{%url 'mail_viewed' pk=1234 %}".replace('1234', email_id);
+        //console.log(get_url)
+        $.ajax({
+              url: get_url,
+              type: 'GET',
+              //data: $(this).serialize(),
+              success: function (response) {
+               $(this_el).removeClass('bg-dark');
+               // location.reload();
+               console.log("success!!");
+              },
+              error: function () {
+                 console.log('Error in posting form');
+              },
+              complete: function () {
+              }
+        });
 
     });
 
+
+
+
+
+    // With Selected
+
     $(".email_status_select").click(function(){
-        // ////////// get status:
+
         let status = $(this).attr("data-email_status");
         console.log(status);
-        // ////////// for each selected email:
+
         $(".email_checkbox:checked").each(function(){
-            // ////////// send request to change status
+
             let email_id = $(this).attr('data-email_id');
             console.log("eamil", email_id);
 
-            // ////// get url
+
             let get_url = "";
             if (status === "spam"){
                 get_url = "{% url 'mail_spam' pk=1234 %}".replace('1234', email_id);
             }
             if (status === "delete"){
                 get_url = "{% url 'mail_deleted' pk=1234 %}".replace('1234', email_id);
+            }
+
+            if (status === "unread"){
+                get_url = "{% url 'mail_unread' pk=1234 %}".replace('1234', email_id);
+            }
+
+            if (status === "read"){
+                get_url = "{% url 'mail_viewed' pk=1234 %}".replace('1234', email_id);
             }
 
             console.log(get_url);
@@ -1790,7 +1913,7 @@
               type: 'GET', // GET or POST
               //data: $(this).serialize(),
               success: function (response) {
-                  location.reload();
+                location.reload();
               },
               error: function () {
                   console.log('Error in posting form');
@@ -1803,11 +1926,6 @@
     });
 
 
-
-//data-email_body
-//data-email_sender
-
-    //card_content_label
     // $(".compose-quill-editor").find("p").html()
 </script>
 </html>
