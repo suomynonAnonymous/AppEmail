@@ -2,12 +2,17 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
 from .views import MailListView, MailCreateView, mail_spam, mail_starred, mail_deleted, \
-    MailMultipleCreate, mail_viewed, mail_unread, MailReplyView, mail_send
+    MailMultipleCreate, mail_viewed, mail_unread, MailReplyView, mail_send, MailUserInfoListView, MailBasicInfoCreate
 
 urlpatterns = [
     path('mail_list_class', MailListView.as_view(), name='mail_list_class'),
+    path('mail_list', MailUserInfoListView.as_view(), name='mail_list'),
 
     path('mail_create_class', MailMultipleCreate.as_view(), name='mail_create_class'),
+    path('mail_create', MailBasicInfoCreate.as_view(), name='mail_create'),
+
+    # path('mail_status_update/<int:pk>', ChangeEmailStatus.as_view(), name='mail_status_update'),
+
     path('reply_create/<int:pk>', MailReplyView.as_view(), name='reply_create'),
 
 

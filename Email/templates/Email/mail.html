@@ -233,7 +233,7 @@
                                     <li class="page-item">
                                          {% if page_obj.has_previous %}
                                         <a class="page-link"
-                                           href="{% url 'mail_list_class'%}?email_type={{email_type}}&page={{ page_obj.previous_page_number }}"
+                                           href="{% url 'mail_list_class'%}?email_type={{email_type}}&filter={{filter}}&page={{ page_obj.previous_page_number }}"
                                            aria-label="Previous">
                                             <i class="ti-arrow-left"></i>
                                         </a>
@@ -243,7 +243,7 @@
                                    <li class="page-item">
                                     {% if page_obj.has_next %}
                                     <a class="page-link"
-                                       href="{% url 'mail_list_class'%}?email_type={{email_type}}&page={{ page_obj.next_page_number }}"
+                                       href="{% url 'mail_list_class'%}?email_type={{email_type}}&filter={{filter}}&page={{ page_obj.next_page_number }}"
                                        aria-label="Next">
                                         <i class="ti-arrow-right"></i>
                                     </a>
@@ -275,7 +275,8 @@
                                     data-email_body="{{email.body}} "
                                     data-email_sender="{{email.sender}} &lt{{email.sender.email}}&gt"
                                     data-email_label="{{email.get_label_display}}"
-                                    data-email_receiver="{{email.receiver}} &lt{{email.receiver.email}}&gt"
+                                    {# data-email_receiver="{{email.receiver}} &lt{{email.receiver.email}}&gt" #}
+                                    data-email_receiver="{{email.get_receivers_display}}"
                                     data-email_viewed_date="{{email.viewed_date}}"
                                     data-email_attached_files="{% if email.file_upload %}{{email.file_upload.url}}{% endif %}"
                                     data-email_file_name="{% if email.file_upload %}{{email.file_upload.name}}{% endif %}">
@@ -639,4 +640,186 @@
 
 
 
+{%block script%}
 
+<script>
+    $( document ).ready(function() {
+        $("#customCheckAll").prop('checked',false);
+        $(".email_checkbox").prop('checked',false);
+    });
+
+    $(".select2-example").select2({
+        placeholder: 'Select'
+    });
+
+    $("#email_submit_form").submit(function(){
+        $("#input_body").html($(".compose-quill-editor").find("p").html());
+        console.log("hello");
+        console.log($("#input_body").html());
+        let url_send = $("#email_submit_form").attr('action') + "?is_send=True";
+        $("#email_submit_form").attr('action',url_send);
+        $("#receiver_list").val($("#receiver_multiple").val());
+    });
+
+    // ///reply:
+    $("#reply_form").submit(function(e){
+        // e.preventDefault()
+        $("#reply_body").val($(".reply-email-quill-editor").find("p").html());
+        console.log("hello");
+        console.log($("#reply_body").val());
+
+        $("#email_submit_form").attr('action',url_send);
+        $("#receiver_list").val($("#receiver_multiple").val());
+    });
+
+    $("#draft_email_create").click(function(){
+        let url_send = $("#email_submit_form").attr('action') + "?draft=True";
+        $("#email_submit_form").attr('action',url_send);
+        $("#email_submit_form").submit();
+    });
+
+    // Email Detailed View
+    $(".card_display_email").click(function(){
+        $("#card_content_subject").html($(this).attr("data-email_subject"));
+        $("#card_content_label").html($(this).attr("data-email_label"));
+
+        $("#card_content_body").html($(this).attr("data-email_body"));
+        $("#card_content_sender").html($(this).attr("data-email_sender"));
+        $("#card_content_receiver").html($(this).attr("data-email_receiver"));
+        $("#card_content_viewed_date").html($(this).attr("data-email_viewed_date"));
+        $("#card_content_attached_files").attr("href", ($(this).attr("data-email_attached_files")));
+        $("#card_content_attached_files").html($(this).attr("data-email_file_name").replace("files/",""));
+        console.log($(this).attr("data-email_file_name"));
+        if ($(this).attr("data-email_file_name") === "")
+        {
+            $("#card_attach_div").hide();
+        }
+
+        let url_reply = "{% url 'reply_create' pk=12345 %}?email_type={{ email_type }}".replace("12345", $(this).attr('list_email_id'));
+        $("#reply_form").attr('action', url_reply);
+     //   console.log($("#reply_form"));
+     //   console.log(url_send);
+
+        {% for email in object_list %}
+            {% for reply in email.get_reply %}
+                if ("{{ email.pk }}" === $(this).attr('list_email_id')){
+                    let new_html = $("#reply_copy_temp").html().replaceAll('change_email_pk', "{{ reply.pk }}");
+                    $("#card_attach_div").after(new_html);
+
+                    $("#card_content_body_{{ reply.pk }}").html("{{ reply.body }}");
+                    $("#card_content_sender_{{ reply.pk }}").html("{{ reply.sender }}");
+                    $("#card_content_receiver_{{ reply.pk }}").html("{{ reply.receiver }}");
+                    $("#card_content_viewed_date_{{ reply.pk }}").html("{{ reply.viewed_date }}");
+                    $("#card_content_attached_files_{{ reply.pk }}").attr("href", ($(this).attr("{% if email.file_upload %}{{email.file_upload.url}}{% endif %}")));
+                    $("#card_content_attached_files_{{ reply.pk }}").html("{% if email.file_upload %}{{email.file_upload.name}}{% endif %}".replace("files/",""));
+                    console.log($("#card_content_attached_files_{{ reply.pk }}"));
+                    if ("{% if email.file_upload %}{{email.file_upload.url}}{% endif %}" === ""){
+                        $("#card_attach_div_{{ reply.pk }}").hide();
+                    }
+                }
+            {% endfor %}
+        {% endfor %}
+
+    });
+
+    // Mark As Viewed On Click Email
+    $(".card_display_email").click(function(){
+        let get_url = "";
+        let email_id = $(this).attr('list_email_id');
+        let this_el = $(this);
+        //console.log(email_id)
+        get_url = "{%url 'mail_viewed' pk=1234 %}".replace('1234', email_id);
+        //console.log(get_url)
+        $.ajax({
+              url: get_url,
+              type: 'GET',
+              //data: $(this).serialize(),
+              success: function (response) {
+               $(this_el).removeClass('bg-dark');
+               // location.reload();
+               console.log("success!!");
+              },
+              error: function () {
+                 console.log('Error in posting form');
+              },
+              complete: function () {
+              }
+        });
+
+    });
+
+          $(".email_back_button").click(function(){
+
+          location.reload();
+          });
+
+
+
+    // With Selected
+
+    $(".email_status_select").click(function(){
+
+        let status = $(this).attr("data-email_status");
+        console.log(status);
+
+        $(".email_checkbox:checked").each(function(){
+
+            let email_id = $(this).attr('data-email_id');
+            console.log("eamil", email_id);
+
+
+            let get_url = "";
+            if (status === "spam"){
+                get_url = "{% url 'mail_spam' pk=1234 %}".replace('1234', email_id);
+            }
+            if (status === "delete"){
+                get_url = "{% url 'mail_deleted' pk=1234 %}".replace('1234', email_id);
+            }
+
+            if (status === "unread"){
+                get_url = "{% url 'mail_unread' pk=1234 %}".replace('1234', email_id);
+            }
+
+            if (status === "read"){
+                get_url = "{% url 'mail_viewed' pk=1234 %}".replace('1234', email_id);
+            }
+
+            console.log(get_url);
+            // ////////// ajax post:
+            $.ajax({
+              url: get_url, // URL to your view that serves new info
+              type: 'GET', // GET or POST
+              //data: $(this).serialize(),
+              success: function (response) {
+                location.reload();
+              },
+              error: function () {
+                  console.log('Error in posting form');
+              },
+              complete: function () {
+              }
+            });
+
+        });
+    });
+
+
+
+    //Show Reply Page
+    $(".reply_view").click(function(){
+
+        //$(".card app-detail").addClass("show");
+        //card app-detail show
+        let email_el_id = "#email_list_li" + $(this).attr('data-email_id');
+        console.log(email_el_id);
+        //console.log()
+        $("#email_list_li" + $(this).attr('data-email_id')).click();
+
+    });
+
+
+    // $(".compose-quill-editor").find("p").html()
+
+</script>
+
+{%endblock%}
