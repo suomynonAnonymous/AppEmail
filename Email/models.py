@@ -60,7 +60,8 @@ class Mail(models.Model):
     #     self.save()
 
     def get_reply(self):
-        return self.mail_set.all().order_by("-pk")
+        # return self.mail_set.filter(receiver__isnull=True).order_by("-pk")
+        return self.mail_set.filter().order_by("-pk")
 
     def get_receivers(self):
         r_list = []
@@ -74,6 +75,11 @@ class Mail(models.Model):
     def get_receivers_display(self):
         r_list = self.get_receivers()
         return ' | '.join([x.username for x in r_list])
+
+    def get_related_mails(self):
+        # ## for reply:
+        # return self.reply_parent.mail_set.filter(receiver__isnull=True).order_by("-pk")
+        return self.reply_parent.mail_set.filter().order_by("-pk")
 
     def __str__(self):
         return self.subject

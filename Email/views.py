@@ -23,7 +23,8 @@ class MailListView(ListView):
             queryset = queryset.filter(receiver=self.request.user, mail_deleted=False, mail_spam=False,
                                        mail_draft=False)
         if email_type == "send":
-            queryset = queryset.filter(sender=self.request.user, receiver=None, mail_send=True, mail_deleted=False)
+            # queryset = queryset.filter(sender=self.request.user, receiver=None, mail_send=True, mail_deleted=False)
+            queryset = queryset.filter(sender=self.request.user, mail_send=True, mail_deleted=False)
         if email_type == "draft":
             queryset = queryset.filter(sender=self.request.user, mail_send=False, mail_deleted=False)
         if email_type == "starred":
@@ -44,6 +45,21 @@ class MailListView(ListView):
             queryset = queryset.order_by('subject')
         if filter_type == "size":
             queryset = queryset.order_by('')
+
+        # distinct by reply parent
+        reply_only_qs = queryset.filter(reply_parent__isnull=False)
+        reply_parent_list = []
+        for q in reply_only_qs:
+            reply_parent_list.append(q.reply_parent)
+        reply_parent_list = list(set(reply_parent_list))
+
+        unique_reply_list = []
+        for p in reply_parent_list:
+            unique_reply_list.append(queryset.filter(reply_parent=p).first().pk)
+
+        unique_reply_queryset = queryset.filter(pk__in=unique_reply_list)
+        queryset = queryset.exclude(reply_parent__isnull=False)
+        queryset = queryset | unique_reply_queryset
 
         # print(queryset)
         return queryset
@@ -158,8 +174,22 @@ class MailReplyView(CreateView):
         self.object.reply_parent = get_object_or_404(Mail, pk=self.kwargs['pk'])
         self.object.subject = "<re>:" + self.object.reply_parent.subject
         self.object.label = self.object.reply_parent.label
-        self.object.sender = self.request.user
+        # self.object.sender = self.request.user
         self.object.receiver = self.object.reply_parent.sender
+
+        # ## create for sender:
+        # ## only create if sender != receiver
+        if not self.request.user in [self.object.receiver]:
+            print("create for sender:")
+            mail_form = MailForm(self.request.POST, self.request.FILES)
+            mail_object_sender = mail_form.save(commit=False)
+            mail_object_sender.reply_parent = self.object.reply_parent
+            mail_object_sender.mail_send = True
+            mail_object_sender.subject = self.object.subject
+            mail_object_sender.label = self.object.label
+            mail_object_sender.sender = self.request.user
+            # mail_object_sender.receivers = receiver_list       ### all related users
+            mail_object_sender.save()
 
         to_return = super().form_valid(form)
         return to_return

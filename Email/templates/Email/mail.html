@@ -680,44 +680,87 @@
 
     // Email Detailed View
     $(".card_display_email").click(function(){
-        $("#card_content_subject").html($(this).attr("data-email_subject"));
-        $("#card_content_label").html($(this).attr("data-email_label"));
 
-        $("#card_content_body").html($(this).attr("data-email_body"));
-        $("#card_content_sender").html($(this).attr("data-email_sender"));
-        $("#card_content_receiver").html($(this).attr("data-email_receiver"));
-        $("#card_content_viewed_date").html($(this).attr("data-email_viewed_date"));
-        $("#card_content_attached_files").attr("href", ($(this).attr("data-email_attached_files")));
-        $("#card_content_attached_files").html($(this).attr("data-email_file_name").replace("files/",""));
-        console.log($(this).attr("data-email_file_name"));
-        if ($(this).attr("data-email_file_name") === "")
-        {
-            $("#card_attach_div").hide();
-        }
-
-        let url_reply = "{% url 'reply_create' pk=12345 %}?email_type={{ email_type }}".replace("12345", $(this).attr('list_email_id'));
-        $("#reply_form").attr('action', url_reply);
      //   console.log($("#reply_form"));
      //   console.log(url_send);
 
         {% for email in object_list %}
-            {% for reply in email.get_reply %}
-                if ("{{ email.pk }}" === $(this).attr('list_email_id')){
-                    let new_html = $("#reply_copy_temp").html().replaceAll('change_email_pk', "{{ reply.pk }}");
-                    $("#card_attach_div").after(new_html);
+            {% if not email.reply_parent %}
+                // //// if email is a parent(original) display at top:
 
-                    $("#card_content_body_{{ reply.pk }}").html("{{ reply.body }}");
-                    $("#card_content_sender_{{ reply.pk }}").html("{{ reply.sender }}");
-                    $("#card_content_receiver_{{ reply.pk }}").html("{{ reply.receiver }}");
-                    $("#card_content_viewed_date_{{ reply.pk }}").html("{{ reply.viewed_date }}");
-                    $("#card_content_attached_files_{{ reply.pk }}").attr("href", ($(this).attr("{% if email.file_upload %}{{email.file_upload.url}}{% endif %}")));
-                    $("#card_content_attached_files_{{ reply.pk }}").html("{% if email.file_upload %}{{email.file_upload.name}}{% endif %}".replace("files/",""));
-                    console.log($("#card_content_attached_files_{{ reply.pk }}"));
-                    if ("{% if email.file_upload %}{{email.file_upload.url}}{% endif %}" === ""){
-                        $("#card_attach_div_{{ reply.pk }}").hide();
-                    }
+                $("#card_content_subject").html($(this).attr("data-email_subject"));
+                $("#card_content_label").html($(this).attr("data-email_label"));
+
+                $("#card_content_body").html($(this).attr("data-email_body"));
+                $("#card_content_sender").html($(this).attr("data-email_sender"));
+                $("#card_content_receiver").html($(this).attr("data-email_receiver"));
+                $("#card_content_viewed_date").html($(this).attr("data-email_viewed_date"));
+                $("#card_content_attached_files").attr("href", ($(this).attr("data-email_attached_files")));
+                $("#card_content_attached_files").html($(this).attr("data-email_file_name").replace("files/",""));
+                console.log($(this).attr("data-email_file_name"));
+                if ($(this).attr("data-email_file_name") === "")
+                {
+                    $("#card_attach_div").hide();
                 }
-            {% endfor %}
+
+                let url_reply = "{% url 'reply_create' pk=12345 %}?email_type={{ email_type }}".replace("12345", $(this).attr('list_email_id'));
+                $("#reply_form").attr('action', url_reply);
+
+                {% for reply in email.get_reply %}
+                    if ("{{ email.pk }}" === $(this).attr('list_email_id')){
+                        let new_html = $("#reply_copy_temp").html().replaceAll('change_email_pk', "{{ reply.pk }}");
+                        $("#card_attach_div").after(new_html);
+
+                        $("#card_content_body_{{ reply.pk }}").html("{{ reply.body }}");
+                        $("#card_content_sender_{{ reply.pk }}").html("{{ reply.sender }}");
+                        $("#card_content_receiver_{{ reply.pk }}").html("{{ reply.receiver }}");
+                        $("#card_content_viewed_date_{{ reply.pk }}").html("{{ reply.viewed_date }}");
+                        $("#card_content_attached_files_{{ reply.pk }}").attr("href", ($(this).attr("{% if email.file_upload %}{{email.file_upload.url}}{% endif %}")));
+                        $("#card_content_attached_files_{{ reply.pk }}").html("{% if email.file_upload %}{{email.file_upload.name}}{% endif %}".replace("files/",""));
+                        console.log($("#card_content_attached_files_{{ reply.pk }}"));
+                        if ("{% if email.file_upload %}{{email.file_upload.url}}{% endif %}" === ""){
+                            $("#card_attach_div_{{ reply.pk }}").hide();
+                        }
+                    }
+                {% endfor %}
+            {% else %}
+                // /// if email is a reply: display parent at top:
+                $("#card_content_subject").html("{{ email.reply_parent.subject }}");
+                $("#card_content_label").html("{{ email.reply_parent.label }}");
+
+                $("#card_content_body").html("{{ email.reply_parent.body }}");
+                $("#card_content_sender").html("{{ email.reply_parent.sender }}");
+                $("#card_content_receiver").html("{{ email.reply_parent.receiver }}");
+                $("#card_content_viewed_date").html("{{ email.reply_parent.viewed_date }}");
+                //$("#card_content_attached_files").attr("href", ());
+                //$("#card_content_attached_files").html($(this).attr("data-email_file_name").replace("files/",""));
+                //console.log($(this).attr("data-email_file_name"));
+                //if ($(this).attr("data-email_file_name") === "")
+                //{
+                //    $("#card_attach_div").hide();
+                //}
+
+                //let url_reply = "{% url 'reply_create' pk=12345 %}?email_type={{ email_type }}".replace("12345", $(this).attr('list_email_id'));
+                //$("#reply_form").attr('action', url_reply);
+
+                {% for reply in email.get_related_mails %}
+                    if ("{{ email.pk }}" === $(this).attr('list_email_id')){
+                        let new_html = $("#reply_copy_temp").html().replaceAll('change_email_pk', "{{ reply.pk }}");
+                        $("#card_attach_div").after(new_html);
+
+                        $("#card_content_body_{{ reply.pk }}").html("{{ reply.body }}");
+                        $("#card_content_sender_{{ reply.pk }}").html("{{ reply.sender }}");
+                        $("#card_content_receiver_{{ reply.pk }}").html("{{ reply.receiver }}");
+                        $("#card_content_viewed_date_{{ reply.pk }}").html("{{ reply.viewed_date }}");
+                        $("#card_content_attached_files_{{ reply.pk }}").attr("href", ($(this).attr("{% if email.file_upload %}{{email.file_upload.url}}{% endif %}")));
+                        $("#card_content_attached_files_{{ reply.pk }}").html("{% if email.file_upload %}{{email.file_upload.name}}{% endif %}".replace("files/",""));
+                        console.log($("#card_content_attached_files_{{ reply.pk }}"));
+                        if ("{% if email.file_upload %}{{email.file_upload.url}}{% endif %}" === ""){
+                            $("#card_attach_div_{{ reply.pk }}").hide();
+                        }
+                    }
+                {% endfor %}
+            {% endif %}
         {% endfor %}
 
     });
